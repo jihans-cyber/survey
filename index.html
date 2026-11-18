@@ -237,7 +237,9 @@
         if (!document.getElementById("q1").value.trim()) { errorEl.textContent = "답변을 입력해 주세요."; return false; }
       }
       if (step === 1) {
-        if (!form.querySelector('input[name="q2"]:checked')) { errorEl.textContent = "하나를 선택해 주세요."; return false; }
+        const picked = form.querySelector('input[name="q2"]:checked');
+        if (!picked) { errorEl.textContent = "하나를 선택해 주세요."; return false; }
+        if (picked.value === "기타" && !q2Other.value.trim()) { errorEl.textContent = "기타 내용을 입력해 주세요."; q2Other.focus(); return false; }
       }
       if (step === 2) {
         const v = q3.value.trim();
