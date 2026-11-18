@@ -80,16 +80,51 @@
       box-shadow: 0 6px 16px rgba(20, 92, 230, .25);
     }
     .next:disabled { opacity: .6; cursor: default; }
-
-    .done { display: none; text-align: center; padding: 60px 10px; flex: 1; flex-direction: column; justify-content: center; }
-    .done.show { display: flex; }
-    .done h2 { font-size: 22px; margin: 0 0 12px; }
-    .done p { color: #555; margin: 0; }
     .footer { text-align: center; color: #9aa0a6; font-size: 12px; margin-top: 28px; }
+
+    /* 엔딩 페이지 */
+    #done { display: none; min-height: 100%; background: #f6f7fb; }
+    #done.show { display: block; }
+    .end-hero {
+      background: #145ce6;
+      color: #fff;
+      text-align: center;
+      padding: 88px 24px 150px;
+      position: relative;
+    }
+    .end-hero::after {
+      content: "";
+      position: absolute; left: 0; right: 0; bottom: 0; height: 70px;
+      background: linear-gradient(to bottom, rgba(20,92,230,0), rgba(20,92,230,0) 40%, #f6f7fb 100%);
+    }
+    .end-hero h1 { font-size: 42px; line-height: 1.3; font-weight: 700; margin: 0; word-break: keep-all; }
+    .end-card {
+      position: relative;
+      z-index: 1;
+      max-width: 420px;
+      margin: -110px auto 0;
+      background: #f7faff;
+      border-radius: 22px;
+      box-shadow: 0 14px 34px rgba(20, 92, 230, .12);
+      padding: 44px 30px 36px;
+      text-align: center;
+    }
+    .end-card h2 { font-size: 22px; color: #145ce6; margin: 0 0 22px; font-weight: 700; }
+    .end-card .divider { width: 36px; height: 4px; background: #bcd1fb; border-radius: 4px; margin: 0 auto 24px; }
+    .end-card p { font-size: 16px; color: #111; margin: 0 0 38px; word-break: keep-all; }
+    .end-btn {
+      display: block;
+      background: #145ce6; color: #fff; text-decoration: none;
+      padding: 17px 16px; border-radius: 14px;
+      font-size: 17px; font-weight: 600;
+      box-shadow: 0 8px 18px rgba(20, 92, 230, .3);
+    }
+    .end-btn:hover { background: #0f4fc7; }
+    .end-card .sub { color: #9aa0a6; font-size: 12px; margin: 16px 0 0; }
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="wrap" id="main">
     <header class="brand" id="intro">
       <img src="https://ddstatic.net/1794815576916-9294461.png" alt="알뜰폰 해지 고객 설문">
       <p class="title">아정당 알뜰폰<br>해지고객 설문</p>
@@ -137,18 +172,25 @@
       <button type="submit" class="next" id="next">다음</button>
     </form>
 
-    <section class="done" id="done">
-      <h2>소중한 의견 감사합니다</h2>
-      <p>보내주신 의견은 서비스 개선에 활용하겠습니다.</p>
-    </section>
-
     <div class="footer">made for 아정당 알뜰폰</div>
   </div>
 
+  <!-- 엔딩 페이지 -->
+  <section id="done" aria-live="polite">
+    <div class="end-hero">
+      <h1>소중한 의견<br>감사합니다</h1>
+    </div>
+    <div class="end-card">
+      <h2>소중한 의견 감사합니다</h2>
+      <div class="divider"></div>
+      <p>보내주신 의견은 서비스 개선에 활용하겠습니다.</p>
+      <a class="end-btn" href="https://ajl.to/XMAvg42" target="_blank" rel="noopener">쇼핑적립 3000P 받으러 가기</a>
+    </div>
+  </section>
+
   <script>
-    // 응답 수집 엔드포인트. Google Forms 또는 Formspree 등의 제출 URL을 넣으면 실제 응답이 저장됩니다.
-    // 비워두면 제출 화면만 보여주고 응답은 저장되지 않습니다.
-    const SUBMIT_ENDPOINT = "";
+    // 응답 수집: Google Apps Script 웹 앱 주소로 전송하면 구글 시트 '아정당 알뜰폰 해지고객 설문 응답' 탭에 한 줄씩 쌓입니다.
+    const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbxmTMJ4EIswIs3TuuY6di8LLjlbF5cYyVbY5ZmPVxRyuFXWAj56rcBBZzDZTh7ihAi2/exec";
 
     const TOTAL = 3;
     let step = 0;
@@ -209,6 +251,13 @@
       if (step > 0) { step--; render(); }
     });
 
+    function showEnding() {
+      document.getElementById("main").style.display = "none";
+      const done = document.getElementById("done");
+      done.classList.add("show");
+      window.scrollTo(0, 0);
+    }
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (!validate()) return;
@@ -224,13 +273,10 @@
       nextBtn.textContent = "제출 중...";
 
       if (SUBMIT_ENDPOINT) {
+        // no-cors: Apps Script 웹 앱은 응답 헤더 제약이 있어 전송만 보내고 완료 처리합니다.
+        const body = new URLSearchParams(new FormData(form));
         try {
-          const res = await fetch(SUBMIT_ENDPOINT, {
-            method: "POST",
-            body: new FormData(form),
-            headers: { "Accept": "application/json" }
-          });
-          if (!res.ok) throw new Error("status " + res.status);
+          await fetch(SUBMIT_ENDPOINT, { method: "POST", mode: "no-cors", body: body });
         } catch (err) {
           nextBtn.disabled = false;
           nextBtn.textContent = "제출하기";
@@ -239,11 +285,7 @@
         }
       }
 
-      form.style.display = "none";
-      document.querySelector(".progress-row").style.display = "none";
-      count.style.display = "none";
-      document.getElementById("intro").style.display = "none";
-      document.getElementById("done").classList.add("show");
+      showEnding();
     });
 
     render();
